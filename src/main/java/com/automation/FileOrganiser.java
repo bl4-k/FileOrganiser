@@ -22,14 +22,22 @@ public class FileOrganiser {
 
     private void sortFile(Path source) throws IOException {
         String fileName = source.getFileName().toString().toLowerCase();
-        String targetFolder = "Others";
+        String targetFolder = "Organised/Others";
 
         if (fileName.endsWith(".pdf")) {
-            targetFolder = "Documents/PDFs";
+            targetFolder = "Organised/Documents/PDFs";
+        } else if (fileName.endsWith(".pptx")) {
+            targetFolder = "Organised/Documents/Presentations";
+        } else if (fileName.endsWith(".docx")) {
+            targetFolder = "Organised/Documents/Documents";
+        } else if (fileName.endsWith(".xlsx")) {
+            targetFolder = "Organised/Documents/Spreadsheets";
         } else if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
-            targetFolder = "Images";
+            targetFolder = "Organised/Images";
         } else if (fileName.endsWith(".zip") || fileName.endsWith(".rar")) {
-            targetFolder = "Archives";
+            targetFolder = "Organised/Archives";
+        } else if (fileName.endsWith(".exe") || fileName.endsWith(".msi")) {
+            targetFolder = "Organised/Others/Executables";
         }
 
         moveFile(source, targetFolder);
@@ -38,7 +46,7 @@ public class FileOrganiser {
     private void moveFile(Path source, String folderName) throws IOException {
         Path targetDir = source.getParent().resolve(folderName);
 
-        if (Files.notExists(targetDir)){
+        if (Files.notExists(targetDir)) {
             Files.createDirectories(targetDir);
         }
 
