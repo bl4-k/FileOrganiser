@@ -20,12 +20,14 @@ public class UIController {
 
     @FXML
     private void handleRun() {
-        statusLabel.setText("Status: Organising...");
+        if (selectedDir != null) {
+            statusLabel.setText("Status: Organising...");
 
-        FileOrganiser organiser = new FileOrganiser();
-        organiser.organiseDownloads();
+            FileOrganiser organiser = new FileOrganiser();
+            organiser.organiseDownloads(selectedDir);
 
-        statusLabel.setText("Status: Done! Check your folders.");
+            statusLabel.setText("Status: Done! Check your folders.");
+        }
     }
 
     @FXML
@@ -34,11 +36,11 @@ public class UIController {
         directoryChooser.setTitle("Select Folder to Organise");
 
         File selectedFile = directoryChooser.showDialog(new Stage());
-        
+
         if (selectedFile != null) {
             selectedDir = selectedFile.toPath();
             pathLabel.setText(selectedDir.toString());
         }
     }
-    
+
 }

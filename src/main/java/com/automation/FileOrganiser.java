@@ -22,10 +22,9 @@ public class FileOrganiser {
         extensionMap.put(".msi", "Organised/Executables");
     }
 
-    public void organiseDownloads() {
-        Path downloadsDir = Paths.get(System.getProperty("user.home"), "Downloads");
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(downloadsDir)) {
+    public void organiseDownloads(Path directory) {
+    
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
                 // Skip directories and only process files
                 if (Files.isRegularFile(file)) {
