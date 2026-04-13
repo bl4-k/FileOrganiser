@@ -23,6 +23,7 @@ public class FileOrganiser {
     }
 
     public void organiseDownloads(Path directory) {
+        initialiseDefaultRules();
     
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
@@ -40,8 +41,16 @@ public class FileOrganiser {
     private void sortFile(Path source) throws IOException {
         String fileName = source.getFileName().toString().toLowerCase();
         String targetFolder = "Organised/Others";
+        System.out.println(fileName);
+        int lastDotIndex = fileName.lastIndexOf('.');
 
-        targetFolder = extensionMap.get(fileName.split(".")[-1]);
+        if (lastDotIndex > 0) {
+            String extension = fileName.substring(lastDotIndex);
+            
+            if (extensionMap.containsKey(extension)) {
+                targetFolder = extensionMap.get(extension);
+            }
+        }
 
         moveFile(source, targetFolder);
     }
