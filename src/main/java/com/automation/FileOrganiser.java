@@ -2,8 +2,26 @@ package com.automation;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FileOrganiser {
+
+    Map<String,String> extensionMap = new HashMap<>();
+
+    public void initialiseDefaultRules() {
+        extensionMap.put(".pdf", "Organised/Documents/PDFs");
+        extensionMap.put(".docx", "Organised/Documents/Documents");
+        extensionMap.put(".pptx", "Organised/Documents/Presentations");
+        extensionMap.put(".xlsx", "Organised/Documents/Spreadsheets");
+        extensionMap.put(".jpg", "Organised/Images");
+        extensionMap.put(".png", "Organised/Images");
+        extensionMap.put(".rar", "Organised/Archives");
+        extensionMap.put(".zip", "Organised/Archives");
+        extensionMap.put(".exe", "Organised/Executables");
+        extensionMap.put(".msi", "Organised/Executables");
+    }
+
     public void organiseDownloads() {
         Path downloadsDir = Paths.get(System.getProperty("user.home"), "Downloads");
 
@@ -24,21 +42,7 @@ public class FileOrganiser {
         String fileName = source.getFileName().toString().toLowerCase();
         String targetFolder = "Organised/Others";
 
-        if (fileName.endsWith(".pdf")) {
-            targetFolder = "Organised/Documents/PDFs";
-        } else if (fileName.endsWith(".pptx")) {
-            targetFolder = "Organised/Documents/Presentations";
-        } else if (fileName.endsWith(".docx")) {
-            targetFolder = "Organised/Documents/Documents";
-        } else if (fileName.endsWith(".xlsx")) {
-            targetFolder = "Organised/Documents/Spreadsheets";
-        } else if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
-            targetFolder = "Organised/Images";
-        } else if (fileName.endsWith(".zip") || fileName.endsWith(".rar")) {
-            targetFolder = "Organised/Archives";
-        } else if (fileName.endsWith(".exe") || fileName.endsWith(".msi")) {
-            targetFolder = "Organised/Others/Executables";
-        }
+        targetFolder = extensionMap.get(fileName.split(".")[-1]);
 
         moveFile(source, targetFolder);
     }
