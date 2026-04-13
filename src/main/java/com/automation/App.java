@@ -1,10 +1,21 @@
 package com.automation;
 
-public class App {
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+public class App extends Application {
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        Parent root = FXMLLoader.load(getClass().getResource("/MainView.fxml"));
+        stage.setTitle("Personal Automation Tool");
+        stage.setScene(new Scene(root, 400, 300));
+        stage.show();
+    }
     public static void main(String[] args) {
-       System.out.println("Automation");
-       FileOrganiser organiser = new FileOrganiser();
-       organiser.organiseDownloads();
-       System.out.println("Done.");
+       launch(args);
     }
 }
