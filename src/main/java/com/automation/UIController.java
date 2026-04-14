@@ -97,7 +97,8 @@ public class UIController {
         DirectoryChooser chooser = new DirectoryChooser();
         File selected = chooser.showDialog(new Stage());
         if (selected != null) {
-            newFolderField.setText(selected.getAbsolutePath());
+            String universalPath = selected.getAbsolutePath().replace("\\", "/");
+            newFolderField.setText(universalPath);
         }
     }
 
