@@ -9,6 +9,10 @@ public class FileOrganiser {
 
     Map<String,String> extensionMap = new HashMap<>();
 
+    public FileOrganiser(){
+        initialiseDefaultRules();
+    }
+
     public void initialiseDefaultRules() {
         extensionMap.put(".pdf", "Organised/Documents/PDFs");
         extensionMap.put(".docx", "Organised/Documents/Documents");
@@ -23,7 +27,6 @@ public class FileOrganiser {
     }
 
     public void organiseDownloads(Path directory) {
-        initialiseDefaultRules();
     
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {

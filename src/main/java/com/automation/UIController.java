@@ -31,9 +31,11 @@ public class UIController {
     public void initialize() {
         extColumn.setCellValueFactory(new PropertyValueFactory<>("extension"));
         folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
+        FileOrganiser organiser = new FileOrganiser();
 
-        rulesData.add(new Rule(".pdf", "Organised/Documents/PDFs"));
-        rulesData.add(new Rule(".png", "Organised/Images"));
+        for (String ext : organiser.extensionMap.keySet()){
+            rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
+        }
 
         rulesTable.setItems(rulesData);
     }
