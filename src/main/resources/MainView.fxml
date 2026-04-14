@@ -1,21 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.automation.UIController">
-    <children>
-        <Label text="File Organiser Automation" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
-        <HBox spacing="10" alignment="CENTER">
-            <Button text="Select Folder" onAction="#handleSelectFolder"/>
-            <Label fx:id="pathLabel" text="No folder selected" />
-        </HBox>
-        <Button fx:id="startBtn" text="Run Organiser" onAction="#handleRun" prefWidth="150" prefHeight="40"/>
-        <Label fx:id="statusLabel" text="Status: Ready" />
-    </children>
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-</VBox>
+<TabPane xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.automation.UIController" tabClosingPolicy="UNAVAILABLE">
+    <tabs>
+        <Tab text="Dashboard">
+            <content>
+                <VBox alignment="CENTER" spacing="20.0">
+                    <children>
+                        <Label text="File Organiser Automation" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <HBox spacing="10" alignment="CENTER">
+                            <Button text="Select Folder" onAction="#handleSelectFolder"/>
+                            <Label fx:id="pathLabel" text="No folder selected" />
+                        </HBox>
+                        <Button fx:id="startBtn" text="Run Organiser" onAction="#handleRun" prefWidth="150" prefHeight="40"/>
+                        <Label fx:id="statusLabel" text="Status: Ready" />
+
+                        
+                    </children>
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </Tab>
+
+        <Tab text="Sorting Rules">
+            <content>
+                <VBox alignment="CENTER" spacing="20.0">
+                    <children>
+                        <Label text="Configure Extensions" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <TableView fx:id="rulesTable" prefHeight="200" editable="true">
+                            <columns>
+                                <TableColumn fx:id="extColumn" text="Extension" prefWidth="100"/>
+                                <TableColumn fx:id="folderColumn" text="Target Folder" prefWidth="250"/>
+                            </columns>
+                        </TableView>
+                        <HBox spacing="10" alignment="CENTER">
+                            <Button text="Add Rule" onAction="#handleAddRule"/>
+                            <Button text="Remove Selected" onAction="#handleRemoveRule"/>
+                        </HBox>
+                    </children>
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </Tab>
+    </tabs>
+</TabPane>
