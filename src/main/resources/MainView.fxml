@@ -45,7 +45,7 @@
                             <VBox spacing="10">
                                 <Label text="Add New Rule" style="-fx-font-weight: bold;"/>
                                 <HBox alignment="CENTER_LEFT" spacing="10" >
-                                    <ComboBox fx:id="extComboBox" promptText="Select Ext"/>
+                                    <ComboBox fx:id="extComboBox" promptText="Select or Type Ext" editable="true" maxWidth="-Infinity" prefWidth="135"/>
                                     <TextField fx:id="newFolderField" promptText="Select folder..." editable="false" HBox.hgrow="ALWAYS"/>
                                     <Button text="📁" onAction="#handleBrowseNewRuleFolder"/>
                                     <Button text="Add Rule" onAction="#handleAddRule"/>

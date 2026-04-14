@@ -61,22 +61,24 @@ public class UIController {
 
     @FXML
     private void handleAddRule() {
-        String ext = extComboBox.getValue();
+        String rawExt = extComboBox.getEditor().getText().trim().toLowerCase();
         String folder = newFolderField.getText();
 
-        if (ext != null && !folder.isEmpty()) {
+        if (!rawExt.isEmpty() && !folder.isEmpty()) {
 
-            boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(ext));
+            String processedExt = rawExt.startsWith(".") ? rawExt : "." + rawExt;
+
+            boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(processedExt));
 
             if (exists) {
-                statusLabelRules.setText("Status: Rule for " + ext + " already exists!");
+                statusLabelRules.setText("Status: Rule for " + processedExt + " already exists!");
                 return; // Stop here!
             }
 
-            rulesData.add(new Rule(ext, folder));
+            rulesData.add(new Rule(processedExt, folder));
 
             // Clear inputs after adding
-            extComboBox.setValue(null);
+            extComboBox.getEditor().clear();;
             newFolderField.clear();
             statusLabelRules.setText("Status: Rule has been set!" );
         } else {
