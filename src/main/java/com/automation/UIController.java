@@ -19,31 +19,40 @@ public class UIController {
 
     private Path selectedDir;
 
-    @FXML private Label statusLabel;
+    @FXML
+    private Label statusLabelDashboard;
 
-    @FXML private Label pathLabel;
+    @FXML
+    private Label pathLabel;
 
-    @FXML private TableView<Rule> rulesTable;
-    @FXML private TableColumn<Rule, String> extColumn;
-    @FXML private TableColumn<Rule, String> folderColumn;
+    @FXML
+    private TableView<Rule> rulesTable;
+    @FXML
+    private TableColumn<Rule, String> extColumn;
+    @FXML
+    private TableColumn<Rule, String> folderColumn;
 
     private ObservableList<Rule> rulesData = FXCollections.observableArrayList();
 
-    @FXML private ComboBox<String> extComboBox;
-    @FXML private TextField newFolderField;
+    @FXML
+    private ComboBox<String> extComboBox;
+    @FXML
+    private TextField newFolderField;
+
+    @FXML
+    private Label statusLabelRules;
 
     @FXML
     public void initialize() {
         extColumn.setCellValueFactory(new PropertyValueFactory<>("extension"));
         folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
-        
+
         extComboBox.setItems(FXCollections.observableArrayList(
-        ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"
-    ));
+                ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"));
 
         FileOrganiser organiser = new FileOrganiser();
 
-        for (String ext : organiser.extensionMap.keySet()){
+        for (String ext : organiser.extensionMap.keySet()) {
             rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
         }
 
@@ -57,20 +66,28 @@ public class UIController {
 
         if (ext != null && !folder.isEmpty()) {
 
+            boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(ext));
+
+            if (exists) {
+                statusLabelRules.setText("Status: Rule for " + ext + " already exists!");
+                return; // Stop here!
+            }
+
             rulesData.add(new Rule(ext, folder));
-            
+
             // Clear inputs after adding
             extComboBox.setValue(null);
             newFolderField.clear();
+            statusLabelRules.setText("Status: Rule has been set!" );
         } else {
-            statusLabel.setText("Status: Select both an extension and a folder!");
+            statusLabelRules.setText("Status: Select both an extension and a folder!");
         }
     }
 
     @FXML
     private void handleRemoveRule() {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
-        if (selected != null){
+        if (selected != null) {
             rulesData.remove(selected);
         }
     }
@@ -83,15 +100,15 @@ public class UIController {
             newFolderField.setText(selected.getAbsolutePath());
         }
     }
- 
+
     @FXML
     private void handleRun() {
         if (selectedDir != null) {
-            statusLabel.setText("Status: Organising...");
+            statusLabelDashboard.setText("Status: Organising...");
 
             FileOrganiser organiser = new FileOrganiser();
 
-            //Clearing old rules and setting the new ones
+            // Clearing old rules and setting the new ones
             organiser.extensionMap.clear();
             for (Rule r : rulesData) {
                 organiser.extensionMap.put(r.getExtension(), r.getFolder());
@@ -99,7 +116,7 @@ public class UIController {
 
             organiser.organiseDownloads(selectedDir);
 
-            statusLabel.setText("Status: Done! Check your folders.");
+            statusLabelDashboard.setText("Status: Done! Check your folders.");
         }
     }
 
