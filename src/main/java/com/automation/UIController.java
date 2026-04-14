@@ -6,8 +6,10 @@ import java.nio.file.Path;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.TableColumn;
 import javafx.stage.DirectoryChooser;
@@ -27,10 +29,18 @@ public class UIController {
 
     private ObservableList<Rule> rulesData = FXCollections.observableArrayList();
 
+    @FXML private ComboBox<String> extComboBox;
+    @FXML private TextField newFolderField;
+
     @FXML
     public void initialize() {
         extColumn.setCellValueFactory(new PropertyValueFactory<>("extension"));
         folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
+        
+        extComboBox.setItems(FXCollections.observableArrayList(
+        ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"
+    ));
+
         FileOrganiser organiser = new FileOrganiser();
 
         for (String ext : organiser.extensionMap.keySet()){
@@ -42,7 +52,19 @@ public class UIController {
 
     @FXML
     private void handleAddRule() {
-        rulesData.add(new Rule(".ext", "TargetFolder"));
+        String ext = extComboBox.getValue();
+        String folder = newFolderField.getText();
+
+        if (ext != null && !folder.isEmpty()) {
+
+            rulesData.add(new Rule(ext, folder));
+            
+            // Clear inputs after adding
+            extComboBox.setValue(null);
+            newFolderField.clear();
+        } else {
+            statusLabel.setText("Status: Select both an extension and a folder!");
+        }
     }
 
     @FXML
@@ -50,6 +72,15 @@ public class UIController {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
         if (selected != null){
             rulesData.remove(selected);
+        }
+    }
+
+    @FXML
+    private void handleBrowseNewRuleFolder() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        File selected = chooser.showDialog(new Stage());
+        if (selected != null) {
+            newFolderField.setText(selected.getAbsolutePath());
         }
     }
  

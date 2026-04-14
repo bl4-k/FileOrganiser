@@ -43,8 +43,18 @@
                             </columns>
                         </TableView>
                         <HBox spacing="10" alignment="CENTER">
-                            <Button text="Add Rule" onAction="#handleAddRule"/>
-                            <Button text="Remove Selected" onAction="#handleRemoveRule"/>
+                            <VBox spacing="10">
+                                <Label text="Add New Rule" style="-fx-font-weight: bold;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ComboBox fx:id="extComboBox" promptText="Select Ext"/>
+                                    
+                                    <TextField fx:id="newFolderField" promptText="Select folder..." editable="false" HBox.hgrow="ALWAYS"/>
+                                    
+                                    <Button text="📁" onAction="#handleBrowseNewRuleFolder"/>
+                                    <Button text="Add Rule" onAction="#handleAddRule"/>
+                                    <Button text="Remove Selected" onAction="#handleRemoveRule"/>
+                                </HBox>
+                            </VBox>
                         </HBox>
                     </children>
                     <padding>
