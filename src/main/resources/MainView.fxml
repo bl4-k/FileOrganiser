@@ -32,9 +32,14 @@
                     <children>
                         <Label text="Configure Extensions" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
                         <TableView fx:id="rulesTable" prefHeight="200" editable="true">
+
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                            </columnResizePolicy>
+
                             <columns>
-                                <TableColumn fx:id="extColumn" text="Extension" prefWidth="100"/>
-                                <TableColumn fx:id="folderColumn" text="Target Folder" prefWidth="250"/>
+                                <TableColumn fx:id="extColumn" text="Extension" prefWidth="25"/>
+                                <TableColumn fx:id="folderColumn" text="Target Folder" prefWidth="75"/>
                             </columns>
                         </TableView>
                         <HBox spacing="10" alignment="CENTER">
