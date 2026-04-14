@@ -12,7 +12,7 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/MainView.fxml"));
         stage.setTitle("Personal Automation Tool");
-        stage.setScene(new Scene(root, 400, 300));
+        stage.setScene(new Scene(root, 600, 500));
         stage.show();
     }
     public static void main(String[] args) {
