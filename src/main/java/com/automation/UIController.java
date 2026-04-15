@@ -2,6 +2,7 @@ package com.automation;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -9,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -21,21 +23,19 @@ public class UIController {
     private Path selectedDir;
 
     @FXML private Label statusLabelDashboard;
-
     @FXML private Label pathLabel;
 
     @FXML private TableView<Rule> rulesTable;
     @FXML private TableColumn<Rule, String> extColumn;
     @FXML private TableColumn<Rule, String> folderColumn;
-
     private ObservableList<Rule> rulesData = FXCollections.observableArrayList();
-
     @FXML private ComboBox<String> extComboBox;
     @FXML private TextField newFolderField;
-
     @FXML private Label statusLabelRules;
-
     @FXML private CheckBox othersCheckBox;
+
+    @FXML private ListView<String> logListView;
+    private ObservableList<String> logData = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -52,6 +52,7 @@ public class UIController {
         }
 
         rulesTable.setItems(rulesData);
+        logListView.setItems(logData);
     }
 
     @FXML
@@ -99,6 +100,18 @@ public class UIController {
         }
     }
 
+    public void addLog(String message) {
+        String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+        logData.add("[" + timestamp + "]" + message);
+
+        logListView.scrollTo(logData.size() - 1);
+    }
+
+    @FXML
+    private void handleClearLogs() {
+        logData.clear();
+    }
+
     @FXML
     private void handleRun() {
         if (selectedDir != null) {
@@ -114,7 +127,11 @@ public class UIController {
 
             boolean moveOthers = othersCheckBox.isSelected();
 
-            organiser.organiseDownloads(selectedDir, moveOthers);
+            ArrayList<String> logs = organiser.organiseDownloads(selectedDir, moveOthers);
+
+            for (String log : logs) {
+                logData.add(log);
+            }
 
             statusLabelDashboard.setText("Status: Done! Check your folders.");
         }

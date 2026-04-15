@@ -2,6 +2,7 @@ package com.automation;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,22 +27,26 @@ public class FileOrganiser {
         extensionMap.put(".msi", "Organised/Executables");
     }
 
-    public void organiseDownloads(Path directory, boolean moveOthers) {
+    public ArrayList<String> organiseDownloads(Path directory, boolean moveOthers) {
+        ArrayList<String> logs = new ArrayList<>();
+        logs.add("Moving files in " + directory.toFile().getAbsolutePath().replace("\\", "/") + ".");
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
                 // Skip directories and only process files
                 if (Files.isRegularFile(file)) {
-                    sortFile(file, moveOthers);
+                    logs.add(sortFile(file, moveOthers));
                 }
             }
         } catch (IOException e) {
             System.err.println("Error reading Downloads folder: " + e.getMessage());
         }
 
+        return logs;
+
     }
 
-    private void sortFile(Path source, boolean moveOthers) throws IOException {
+    private String sortFile(Path source, boolean moveOthers) throws IOException {
         String fileName = source.getFileName().toString().toLowerCase();
         int lastDotIndex = fileName.lastIndexOf('.');
 
@@ -57,11 +62,13 @@ public class FileOrganiser {
         }
 
         if (targetFolder != null) {
-            moveFile(source, targetFolder);
+            return moveFile(source, targetFolder);
         }
+
+        return "Unable to move " + fileName + ".";
     }
 
-    private void moveFile(Path source, String folderName) throws IOException {
+    private String moveFile(Path source, String folderName) throws IOException {
         Path targetDir = source.getParent().resolve(folderName);
 
         if (Files.notExists(targetDir)) {
@@ -71,6 +78,6 @@ public class FileOrganiser {
         Path targetPath = targetDir.resolve(source.getFileName());
         Files.move(source, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        System.out.println("Moved: " + source.getFileName() + " -> " + folderName);
+        return source.getFileName() + " -> " + folderName;
     }
 }
