@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
@@ -19,28 +20,22 @@ public class UIController {
 
     private Path selectedDir;
 
-    @FXML
-    private Label statusLabelDashboard;
+    @FXML private Label statusLabelDashboard;
 
-    @FXML
-    private Label pathLabel;
+    @FXML private Label pathLabel;
 
-    @FXML
-    private TableView<Rule> rulesTable;
-    @FXML
-    private TableColumn<Rule, String> extColumn;
-    @FXML
-    private TableColumn<Rule, String> folderColumn;
+    @FXML private TableView<Rule> rulesTable;
+    @FXML private TableColumn<Rule, String> extColumn;
+    @FXML private TableColumn<Rule, String> folderColumn;
 
     private ObservableList<Rule> rulesData = FXCollections.observableArrayList();
 
-    @FXML
-    private ComboBox<String> extComboBox;
-    @FXML
-    private TextField newFolderField;
+    @FXML private ComboBox<String> extComboBox;
+    @FXML private TextField newFolderField;
 
-    @FXML
-    private Label statusLabelRules;
+    @FXML private Label statusLabelRules;
+
+    @FXML private CheckBox othersCheckBox;
 
     @FXML
     public void initialize() {
@@ -72,7 +67,7 @@ public class UIController {
 
             if (exists) {
                 statusLabelRules.setText("Status: Rule for " + processedExt + " already exists!");
-                return; // Stop here!
+                return;
             }
 
             rulesData.add(new Rule(processedExt, folder));
@@ -117,7 +112,9 @@ public class UIController {
                 organiser.extensionMap.put(r.getExtension(), r.getFolder());
             }
 
-            organiser.organiseDownloads(selectedDir);
+            boolean moveOthers = othersCheckBox.isSelected();
+
+            organiser.organiseDownloads(selectedDir, moveOthers);
 
             statusLabelDashboard.setText("Status: Done! Check your folders.");
         }

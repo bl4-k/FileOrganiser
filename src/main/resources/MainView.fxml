@@ -52,6 +52,9 @@
                                     <Button text="Remove Selected" onAction="#handleRemoveRule"/>
                                 </HBox>
                                 <VBox alignment="CENTER">
+                                    <HBox>
+                                    <CheckBox fx:id="othersCheckBox" text="Move unknown file types to 'Others' folder" selected="true"/>
+                                    </HBox>
                                     <Label fx:id="statusLabelRules" text=""/>
                                 </VBox>
                             </VBox>

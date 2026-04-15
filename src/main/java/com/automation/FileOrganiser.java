@@ -7,9 +7,9 @@ import java.util.Map;
 
 public class FileOrganiser {
 
-    Map<String,String> extensionMap = new HashMap<>();
+    Map<String, String> extensionMap = new HashMap<>();
 
-    public FileOrganiser(){
+    public FileOrganiser() {
         initialiseDefaultRules();
     }
 
@@ -26,13 +26,13 @@ public class FileOrganiser {
         extensionMap.put(".msi", "Organised/Executables");
     }
 
-    public void organiseDownloads(Path directory) {
-    
+    public void organiseDownloads(Path directory, boolean moveOthers) {
+
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
                 // Skip directories and only process files
                 if (Files.isRegularFile(file)) {
-                    sortFile(file);
+                    sortFile(file, moveOthers);
                 }
             }
         } catch (IOException e) {
@@ -41,21 +41,24 @@ public class FileOrganiser {
 
     }
 
-    private void sortFile(Path source) throws IOException {
+    private void sortFile(Path source, boolean moveOthers) throws IOException {
         String fileName = source.getFileName().toString().toLowerCase();
-        String targetFolder = "Organised/Others";
-        System.out.println(fileName);
         int lastDotIndex = fileName.lastIndexOf('.');
+
+        String targetFolder = null;
 
         if (lastDotIndex > 0) {
             String extension = fileName.substring(lastDotIndex);
-            
-            if (extensionMap.containsKey(extension)) {
-                targetFolder = extensionMap.get(extension);
-            }
+            targetFolder = extensionMap.get(extension);
         }
 
-        moveFile(source, targetFolder);
+        if (targetFolder == null && moveOthers) {
+            targetFolder = "Organised/Others";
+        }
+
+        if (targetFolder != null) {
+            moveFile(source, targetFolder);
+        }
     }
 
     private void moveFile(Path source, String folderName) throws IOException {
