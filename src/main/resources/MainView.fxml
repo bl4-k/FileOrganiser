@@ -51,12 +51,16 @@
                                     <Button text="Add Rule" onAction="#handleAddRule"/>
                                     <Button text="Remove Selected" onAction="#handleRemoveRule"/>
                                 </HBox>
-                                <VBox alignment="CENTER">
-                                    <HBox>
+                                <HBox>
+                                    <HBox alignment="CENTER_LEFT">
                                     <CheckBox fx:id="othersCheckBox" text="Move unknown file types to 'Others' folder" selected="true"/>
                                     </HBox>
-                                    <Label fx:id="statusLabelRules" text=""/>
-                                </VBox>
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <HBox alignment="CENTER_RIGHT">
+                                    <Button text="Reset to Defaults" onAction="#handleReset"/>
+                                    </HBox>
+                                </HBox>
+                                <Label fx:id="statusLabelRules" text=""/>
                             </VBox>
                         </HBox>
                     </children>

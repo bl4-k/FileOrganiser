@@ -185,16 +185,20 @@ public class FileOrganiser {
         }
     }
 
-    public void addRules(String ext, String directory){
+    public void addRules(String ext, String directory) {
         extensionMap.put(ext, directory);
         saveRules();
     }
 
-    public void removeRules(Rule rule){
+    public void removeRules(Rule rule) {
         extensionMap.remove(rule.getExtension());
         saveRules();
     }
 
-
+    public void resetToDefaults() {
+        extensionMap.clear();
+        initialiseDefaultRules();
+        saveRules();
+    }
 
 }

@@ -152,4 +152,13 @@ public class UIController {
         }
     }
 
+    @FXML
+    private void handleReset(){
+        organiser.resetToDefaults();
+        rulesData.clear();
+        for (String ext : organiser.extensionMap.keySet()) {
+            rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
+        }
+    }
+
 }
