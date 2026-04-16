@@ -19,6 +19,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 public class UIController {
+    FileOrganiser organiser = new FileOrganiser();
 
     private Path selectedDir;
 
@@ -45,7 +46,6 @@ public class UIController {
         extComboBox.setItems(FXCollections.observableArrayList(
                 ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"));
 
-        FileOrganiser organiser = new FileOrganiser();
 
         for (String ext : organiser.extensionMap.keySet()) {
             rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
@@ -54,6 +54,7 @@ public class UIController {
         for (String log : organiser.logs) {
             logData.add(log);
         }
+
         organiser.logs.clear();
 
         rulesTable.setItems(rulesData);
@@ -79,6 +80,7 @@ public class UIController {
             }
 
             rulesData.add(new Rule(processedExt, folder));
+            organiser.addRules(processedExt, folder);
 
             // Clear inputs after adding
             extComboBox.getEditor().clear();;
@@ -93,7 +95,7 @@ public class UIController {
     private void handleRemoveRule() {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            rulesData.remove(selected);
+            organiser.removeRules(selected);;
         }
     }
 
@@ -123,14 +125,6 @@ public class UIController {
     private void handleRun() {
         if (selectedDir != null) {
             statusLabelDashboard.setText("Status: Organising...");
-
-            FileOrganiser organiser = new FileOrganiser();
-
-            // Clearing old rules and setting the new ones
-            organiser.extensionMap.clear();
-            for (Rule r : rulesData) {
-                organiser.extensionMap.put(r.getExtension(), r.getFolder());
-            }
 
             boolean moveOthers = othersCheckBox.isSelected();
             organiser.organiseDownloads(selectedDir, moveOthers);

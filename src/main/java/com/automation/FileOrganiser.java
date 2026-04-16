@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FileOrganiser {
@@ -14,7 +15,7 @@ public class FileOrganiser {
     ArrayList<String> logs = new ArrayList<>();
 
     public FileOrganiser() {
-        initialiseDefaultRules();
+        loadRules();
         readLogFromFile();
     }
 
@@ -142,6 +143,56 @@ public class FileOrganiser {
         }
 
         return path;
+    }
+
+    public void saveRules() {
+        try {
+            Path path = getAppDataPath().resolve("rules.csv");
+            if (Files.notExists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
+
+            List<String> lines = new ArrayList<>();
+            extensionMap.forEach((ext, folder) -> lines.add(ext + "," + folder));
+
+            Files.write(
+                    path,
+                    lines,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (Exception e) {
+            System.err.println("Failed to save rules: " + e.getMessage());
+        }
+    }
+
+    public void loadRules() {
+        Path path = getAppDataPath().resolve("rules.csv");
+        if (Files.exists(path)) {
+            try {
+                List<String> lines = Files.readAllLines(path);
+                extensionMap.clear();
+                for (String line : lines) {
+                    String[] parts = line.split(",", 2);
+                    if (parts.length == 2) {
+                        extensionMap.put(parts[0], parts[1]);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to load rules: " + e.getMessage());
+            }
+        } else {
+            initialiseDefaultRules();
+        }
+    }
+
+    public void addRules(String ext, String directory){
+        extensionMap.put(ext, directory);
+        saveRules();
+    }
+
+    public void removeRules(Rule rule){
+        extensionMap.remove(rule);
+        saveRules();
     }
 
 }
