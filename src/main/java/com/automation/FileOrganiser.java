@@ -1,7 +1,10 @@
 package com.automation;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.Map;
 public class FileOrganiser {
 
     Map<String, String> extensionMap = new HashMap<>();
+    ArrayList<String> logs = new ArrayList<>();
 
     public FileOrganiser() {
         initialiseDefaultRules();
@@ -27,23 +31,22 @@ public class FileOrganiser {
         extensionMap.put(".msi", "Organised/Executables");
     }
 
-    public ArrayList<String> organiseDownloads(Path directory, boolean moveOthers) {
-        ArrayList<String> logs = new ArrayList<>();
+    public void organiseDownloads(Path directory, boolean moveOthers) {
         logs.add("Moving files in " + directory.toFile().getAbsolutePath().replace("\\", "/") + ".");
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
                 // Skip directories and only process files
                 if (Files.isRegularFile(file)) {
-                    logs.add(sortFile(file, moveOthers));
+                    String logMessage = sortFile(file, moveOthers);
+                    logs.add(logMessage);
                 }
             }
         } catch (IOException e) {
             System.err.println("Error reading Downloads folder: " + e.getMessage());
         }
 
-        return logs;
-
+        logs.add("Finished moving files in " + directory.toFile().getAbsolutePath().replace("\\", "/") + ".");
     }
 
     private String sortFile(Path source, boolean moveOthers) throws IOException {
@@ -78,6 +81,22 @@ public class FileOrganiser {
         Path targetPath = targetDir.resolve(source.getFileName());
         Files.move(source, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        return source.getFileName() + " -> " + folderName;
+        String logMessage = source.getFileName() + " -> " + folderName;
+
+        return logMessage;
     }
+
+    public void writeLogToFile(String message) {
+        try {
+            File logFile = new File("organiser_logs.txt");
+            
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String logEntry = "[" + timestamp + "] " + message + System.lineSeparator();
+
+            Files.write(logFile.toPath(), logEntry.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        }   catch (IOException e) {
+            System.err.println("Could not write to log file: " + e.getMessage());
+        }
+    }
+
 }

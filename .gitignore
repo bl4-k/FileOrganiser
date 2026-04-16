@@ -3,6 +3,7 @@
 
 # Log files
 *.log
+organiser_logs.txt
 
 # Package Files #
 *.jar

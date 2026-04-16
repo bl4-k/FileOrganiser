@@ -126,11 +126,11 @@ public class UIController {
             }
 
             boolean moveOthers = othersCheckBox.isSelected();
+            organiser.organiseDownloads(selectedDir, moveOthers);
 
-            ArrayList<String> logs = organiser.organiseDownloads(selectedDir, moveOthers);
-
-            for (String log : logs) {
+            for (String log : organiser.logs) {
                 logData.add(log);
+                organiser.writeLogToFile(log);
             }
 
             statusLabelDashboard.setText("Status: Done! Check your folders.");
