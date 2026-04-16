@@ -51,8 +51,15 @@ public class UIController {
             rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
         }
 
+        for (String log : organiser.logs) {
+            logData.add(log);
+        }
+        organiser.logs.clear();
+
         rulesTable.setItems(rulesData);
         logListView.setItems(logData);
+
+        logListView.scrollTo(logData.size() - 1);
     }
 
     @FXML

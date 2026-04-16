@@ -15,6 +15,7 @@ public class FileOrganiser {
 
     public FileOrganiser() {
         initialiseDefaultRules();
+        readLogFromFile();
     }
 
     public void initialiseDefaultRules() {
@@ -31,7 +32,10 @@ public class FileOrganiser {
     }
 
     public void organiseDownloads(Path directory, boolean moveOthers) {
-        logs.add("Moving files in " + directory.toFile().getAbsolutePath().replace("\\", "/") + ".");
+        String cleanDir = directory.toFile().getAbsolutePath().replace("\\", "/");
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
+        String logEntry = "[" + timestamp + "] Moving files in " + cleanDir + ".";
+        logs.add(logEntry);
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
             for (Path file : stream) {
@@ -45,7 +49,9 @@ public class FileOrganiser {
             System.err.println("Error reading Downloads folder: " + e.getMessage());
         }
 
-        logs.add("Finished moving files in " + directory.toFile().getAbsolutePath().replace("\\", "/") + ".");
+        timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
+        logEntry = "[" + timestamp + "] Finished moving files in " + cleanDir + ".";
+        logs.add(logEntry);
     }
 
     private String sortFile(Path source, boolean moveOthers) throws IOException {
@@ -53,6 +59,7 @@ public class FileOrganiser {
         int lastDotIndex = fileName.lastIndexOf('.');
 
         String targetFolder = null;
+        String logMessage;
 
         if (lastDotIndex > 0) {
             String extension = fileName.substring(lastDotIndex);
@@ -64,10 +71,15 @@ public class FileOrganiser {
         }
 
         if (targetFolder != null) {
-            return moveFile(source, targetFolder);
+            logMessage = moveFile(source, targetFolder);
+        } else {
+            logMessage = "Unable to move " + fileName + ".";
         }
 
-        return "Unable to move " + fileName + ".";
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
+        String logEntry = "[" + timestamp + "] " + logMessage;
+
+        return logEntry;
     }
 
     private String moveFile(Path source, String folderName) throws IOException {
@@ -94,20 +106,26 @@ public class FileOrganiser {
             }
 
             Path logFile = folderPath.resolve("logs.txt");
-
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            String logEntry = "[" + timestamp + "] " + message + System.lineSeparator();
+            String logEntry = message + System.lineSeparator();
 
             Files.write(
-                logFile,
-                logEntry.getBytes(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.APPEND);
+                    logFile,
+                    logEntry.getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
         } catch (IOException e) {
             Path folderPath = getAppDataPath();
             System.err.println("FAILED TO WRITE TO: " + folderPath.toAbsolutePath());
-    
         }
+    }
+
+    public void readLogFromFile() {
+        try {
+            logs = (ArrayList<String>) Files.readAllLines(getAppDataPath().resolve("logs.txt"));
+        } catch (Exception e) {
+            System.err.println("Couldn't read logs.");
+        }
+
     }
 
     private Path getAppDataPath() {
