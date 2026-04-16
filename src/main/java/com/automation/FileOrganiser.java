@@ -1,6 +1,5 @@
 package com.automation;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -88,15 +87,43 @@ public class FileOrganiser {
 
     public void writeLogToFile(String message) {
         try {
-            File logFile = new File("organiser_logs.txt");
-            
+            Path folderPath = getAppDataPath();
+
+            if (Files.notExists(folderPath)) {
+                Files.createDirectories(folderPath);
+            }
+
+            Path logFile = folderPath.resolve("logs.txt");
+
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             String logEntry = "[" + timestamp + "] " + message + System.lineSeparator();
 
-            Files.write(logFile.toPath(), logEntry.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        }   catch (IOException e) {
-            System.err.println("Could not write to log file: " + e.getMessage());
+            Files.write(
+                logFile,
+                logEntry.getBytes(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            Path folderPath = getAppDataPath();
+            System.err.println("FAILED TO WRITE TO: " + folderPath.toAbsolutePath());
+    
         }
+    }
+
+    private Path getAppDataPath() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String userHome = System.getProperty("user.home");
+        Path path;
+
+        if (os.contains("win")) {
+            path = Paths.get(System.getenv("APPDATA"), "FileOrganiser");
+        } else if (os.contains("mac")) {
+            path = Paths.get(userHome, "Library", "Application Support", "FileOrganiser");
+        } else {
+            path = Paths.get(userHome, ".fileorganiser");
+        }
+
+        return path;
     }
 
 }
