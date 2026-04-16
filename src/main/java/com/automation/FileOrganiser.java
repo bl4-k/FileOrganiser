@@ -30,6 +30,12 @@ public class FileOrganiser {
         extensionMap.put(".zip", "Organised/Archives");
         extensionMap.put(".exe", "Organised/Executables");
         extensionMap.put(".msi", "Organised/Executables");
+        extensionMap.put(".mp3", "Organised/Audio");
+        extensionMap.put(".m4a", "Organised/Audio");
+        extensionMap.put(".wav", "Organised/Audio");
+        extensionMap.put(".mp4", "Organised/Video");
+        extensionMap.put(".avi", "Organised/Video");
+        extensionMap.put(".mkv", "Organised/Video");
     }
 
     public void organiseDownloads(Path directory, boolean moveOthers) {

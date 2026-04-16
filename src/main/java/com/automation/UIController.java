@@ -55,8 +55,13 @@ public class UIController {
         extColumn.setCellValueFactory(new PropertyValueFactory<>("extension"));
         folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
 
+        folderColumn.setSortable(true);
+
+        folderColumn.setSortType(TableColumn.SortType.ASCENDING);
+
         extComboBox.setItems(FXCollections.observableArrayList(
-                ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"));
+                ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi", ".mp3", ".m4a",
+                ".wav", ".mp4", ".avi", ".mkv"));
 
         for (String ext : organiser.extensionMap.keySet()) {
             rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
@@ -70,6 +75,9 @@ public class UIController {
 
         rulesTable.setItems(rulesData);
         logListView.setItems(logData);
+
+        rulesTable.getSortOrder().add(folderColumn);
+        rulesTable.sort();
 
         logListView.scrollTo(logData.size() - 1);
     }
@@ -92,6 +100,7 @@ public class UIController {
 
             rulesData.add(new Rule(processedExt, folder));
             organiser.addRules(processedExt, folder);
+            rulesTable.sort();
 
             // Clear inputs after adding
             extComboBox.getEditor().clear();
