@@ -201,4 +201,16 @@ public class FileOrganiser {
         saveRules();
     }
 
+    public void clearLogFile() {
+        try {
+        Path logFile = getAppDataPath().resolve("logs.txt");
+        
+        if (Files.exists(logFile)) {
+            Files.write(logFile, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
+        }
+    } catch (IOException e) {
+        System.err.println("Could not clear log file: " + e.getMessage());
+    }
+    }
+
 }

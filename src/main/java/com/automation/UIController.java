@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -23,19 +25,29 @@ public class UIController {
 
     private Path selectedDir;
 
-    @FXML private Label statusLabelDashboard;
-    @FXML private Label pathLabel;
+    @FXML
+    private Label statusLabelDashboard;
+    @FXML
+    private Label pathLabel;
 
-    @FXML private TableView<Rule> rulesTable;
-    @FXML private TableColumn<Rule, String> extColumn;
-    @FXML private TableColumn<Rule, String> folderColumn;
+    @FXML
+    private TableView<Rule> rulesTable;
+    @FXML
+    private TableColumn<Rule, String> extColumn;
+    @FXML
+    private TableColumn<Rule, String> folderColumn;
     private ObservableList<Rule> rulesData = FXCollections.observableArrayList();
-    @FXML private ComboBox<String> extComboBox;
-    @FXML private TextField newFolderField;
-    @FXML private Label statusLabelRules;
-    @FXML private CheckBox othersCheckBox;
+    @FXML
+    private ComboBox<String> extComboBox;
+    @FXML
+    private TextField newFolderField;
+    @FXML
+    private Label statusLabelRules;
+    @FXML
+    private CheckBox othersCheckBox;
 
-    @FXML private ListView<String> logListView;
+    @FXML
+    private ListView<String> logListView;
     private ObservableList<String> logData = FXCollections.observableArrayList();
 
     @FXML
@@ -45,7 +57,6 @@ public class UIController {
 
         extComboBox.setItems(FXCollections.observableArrayList(
                 ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi"));
-
 
         for (String ext : organiser.extensionMap.keySet()) {
             rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
@@ -83,9 +94,10 @@ public class UIController {
             organiser.addRules(processedExt, folder);
 
             // Clear inputs after adding
-            extComboBox.getEditor().clear();;
+            extComboBox.getEditor().clear();
+            ;
             newFolderField.clear();
-            statusLabelRules.setText("Status: Rule has been set!" );
+            statusLabelRules.setText("Status: Rule has been set!");
         } else {
             statusLabelRules.setText("Status: Select both an extension and a folder!");
         }
@@ -96,7 +108,8 @@ public class UIController {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
             rulesData.remove(selected);
-            organiser.removeRules(selected);;
+            organiser.removeRules(selected);
+            ;
         }
     }
 
@@ -120,6 +133,19 @@ public class UIController {
     @FXML
     private void handleClearLogs() {
         logData.clear();
+    }
+
+    @FXML
+    private void handleClearStoredLogs() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Clear Logs");
+        alert.setHeaderText("Are you sure?");
+        alert.setContentText("This will permanently delete the log history.");
+
+        if (alert.showAndWait().get() == ButtonType.OK) {
+            logData.clear();
+            organiser.clearLogFile();
+        }
     }
 
     @FXML
@@ -153,12 +179,20 @@ public class UIController {
     }
 
     @FXML
-    private void handleReset(){
-        organiser.resetToDefaults();
-        rulesData.clear();
-        for (String ext : organiser.extensionMap.keySet()) {
-            rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
+    private void handleReset() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Reset to default rules");
+        alert.setHeaderText("Are you sure?");
+        alert.setContentText("This will permanently reset the rules to default.");
+
+        if (alert.showAndWait().get() == ButtonType.OK) {
+            organiser.resetToDefaults();
+            rulesData.clear();
+            for (String ext : organiser.extensionMap.keySet()) {
+                rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
+            }
         }
+
     }
 
 }
