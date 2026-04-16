@@ -95,6 +95,7 @@ public class UIController {
     private void handleRemoveRule() {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
+            rulesData.remove(selected);
             organiser.removeRules(selected);;
         }
     }
