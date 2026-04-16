@@ -191,8 +191,10 @@ public class FileOrganiser {
     }
 
     public void removeRules(Rule rule){
-        extensionMap.remove(rule);
+        extensionMap.remove(rule.getExtension());
         saveRules();
     }
+
+
 
 }
