@@ -14,7 +14,7 @@
                             <Button text="Select Folder" onAction="#handleSelectFolder"/>
                             <Label fx:id="pathLabel" text="No folder selected" />
                         </HBox>
-                        <Button fx:id="startBtn" text="Run Organiser" onAction="#handleRun" prefWidth="150" prefHeight="40"/>
+                        <Button fx:id="startBtn" text="Run" onAction="#handleRun" prefWidth="150" prefHeight="40"/>
                         <Label fx:id="statusLabelDashboard" text="Status: Ready" />
 
                         
@@ -43,10 +43,10 @@
                         </TableView>
                         <HBox alignment="CENTER" spacing="10">
                             <VBox spacing="10">
-                                <Label text="Add New Rule" style="-fx-font-weight: bold;"/>
+                                <Label text="Modify Rules" style="-fx-font-weight: bold;"/>
                                 <HBox alignment="CENTER_LEFT" spacing="10" >
-                                    <ComboBox fx:id="extComboBox" promptText="Select or Type Ext" editable="true" maxWidth="-Infinity" prefWidth="135"/>
-                                    <TextField fx:id="newFolderField" promptText="Select folder..." editable="true" HBox.hgrow="ALWAYS"/>
+                                    <ComboBox fx:id="extComboBox" promptText="Select or type Ext..." editable="true" maxWidth="-Infinity" prefWidth="135"/>
+                                    <TextField fx:id="newFolderField" promptText="Select or type folder..." editable="true" HBox.hgrow="ALWAYS"/>
                                     <Button text="📁" onAction="#handleBrowseNewRuleFolder"/>
                                     <Button text="Add Rule" onAction="#handleAddRule"/>
                                     <Button text="Remove Selected" onAction="#handleRemoveRule"/>
@@ -80,7 +80,7 @@
                         <ListView fx:id="logListView" VBox.vgrow="ALWAYS"/>
                         <HBox alignment= "CENTER" spacing="10">
                             <Button text="Clear Logs" onAction="#handleClearLogs"/>
-                            <Button text="Clear Stored Logs" onAction="#handleClearStoredLogs"/>
+                            <Button text="Clear Logs on Disk" onAction="#handleClearStoredLogs"/>
                         </HBox>
                     </children>
                     <padding>
