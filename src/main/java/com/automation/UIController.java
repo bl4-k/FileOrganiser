@@ -2,34 +2,21 @@ package com.automation;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.TableColumn;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 public class UIController {
     FileOrganiser organiser = new FileOrganiser();
-
     private Path selectedDir;
-
     @FXML
     private Label statusLabelDashboard;
     @FXML
     private Label pathLabel;
-
     @FXML
     private TableView<Rule> rulesTable;
     @FXML
@@ -45,7 +32,6 @@ public class UIController {
     private Label statusLabelRules;
     @FXML
     private CheckBox othersCheckBox;
-
     @FXML
     private ListView<String> logListView;
     private ObservableList<String> logData = FXCollections.observableArrayList();
@@ -56,22 +42,14 @@ public class UIController {
         folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
 
         folderColumn.setSortable(true);
-
         folderColumn.setSortType(TableColumn.SortType.ASCENDING);
 
         extComboBox.setItems(FXCollections.observableArrayList(
                 ".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".rar", ".zip", ".exe", ".msi", ".mp3", ".m4a",
                 ".wav", ".mp4", ".avi", ".mkv"));
 
-        for (String ext : organiser.extensionMap.keySet()) {
-            rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
-        }
-
-        for (String log : organiser.logs) {
-            logData.add(log);
-        }
-
-        organiser.logs.clear();
+        loadRules();
+        loadLogs();
 
         rulesTable.setItems(rulesData);
         logListView.setItems(logData);
@@ -87,29 +65,29 @@ public class UIController {
         String rawExt = extComboBox.getEditor().getText().trim().toLowerCase();
         String folder = newFolderField.getText();
 
-        if (!rawExt.isEmpty() && !folder.isEmpty()) {
-
-            String processedExt = rawExt.startsWith(".") ? rawExt : "." + rawExt;
-
-            boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(processedExt));
-
-            if (exists) {
-                statusLabelRules.setText("Status: Rule for " + processedExt + " already exists!");
-                return;
-            }
-
-            rulesData.add(new Rule(processedExt, folder));
-            organiser.addRules(processedExt, folder);
-            rulesTable.sort();
-
-            // Clear inputs after adding
-            extComboBox.getEditor().clear();
-            ;
-            newFolderField.clear();
-            statusLabelRules.setText("Status: Rule has been set!");
-        } else {
-            statusLabelRules.setText("Status: Select both an extension and a folder!");
+        if (rawExt.isEmpty() || folder.isEmpty()) {
+            setStatusRules("Select both an extension and a folder!");
+            return;
         }
+
+        String processedExt = rawExt.startsWith(".") ? rawExt : "." + rawExt;
+
+        // Prevent duplicate extension rules (case-insensitive match)
+        boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(processedExt));
+
+        if (exists) {
+            setStatusRules("Rule for " + processedExt + " already exists!");
+            return;
+        }
+
+        rulesData.add(new Rule(processedExt, folder));
+        organiser.addRules(processedExt, folder);
+        rulesTable.sort();
+
+        extComboBox.getEditor().clear();
+        newFolderField.clear();
+        setStatusRules("Rule has been set!");
+
     }
 
     @FXML
@@ -118,25 +96,39 @@ public class UIController {
         if (selected != null) {
             rulesData.remove(selected);
             organiser.removeRules(selected);
-            ;
         }
     }
 
     @FXML
     private void handleBrowseNewRuleFolder() {
         DirectoryChooser chooser = new DirectoryChooser();
-        File selected = chooser.showDialog(new Stage());
+        File selected = chooser.showDialog(rulesTable.getScene().getWindow());
         if (selected != null) {
             String universalPath = selected.getAbsolutePath().replace("\\", "/");
             newFolderField.setText(universalPath);
         }
     }
 
-    public void addLog(String message) {
-        String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-        logData.add("[" + timestamp + "]" + message);
+    @FXML
+    private void handleReset() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Reset to default rules");
+        alert.setHeaderText("Are you sure?");
+        alert.setContentText("This will permanently reset the rules to default.");
 
-        logListView.scrollTo(logData.size() - 1);
+        if (alert.showAndWait().get() == ButtonType.OK) {
+            organiser.resetToDefaults();
+            loadRules();
+        }
+
+    }
+
+    // Loads rules from organiser into UI state
+    private void loadRules() {
+        rulesData.clear();
+        for (String ext : organiser.getExtensionMap().keySet()) {
+            rulesData.add(new Rule(ext, organiser.getExtensionMap().get(ext)));
+        }
     }
 
     @FXML
@@ -157,20 +149,26 @@ public class UIController {
         }
     }
 
+    // Loads logs into UI state
+    private void loadLogs() {
+        logData.addAll(organiser.getLogs());
+        organiser.getLogs().clear();
+    }
+
     @FXML
     private void handleRun() {
         if (selectedDir != null) {
-            statusLabelDashboard.setText("Status: Organising...");
+            setStatusDashboard("Organising...");
 
             boolean moveOthers = othersCheckBox.isSelected();
-            organiser.organiseDownloads(selectedDir, moveOthers);
+            organiser.organiseFile(selectedDir, moveOthers);
 
-            for (String log : organiser.logs) {
+            for (String log : organiser.getLogs()) {
                 logData.add(log);
                 organiser.writeLogToFile(log);
             }
 
-            statusLabelDashboard.setText("Status: Done! Check your folders.");
+            setStatusDashboard("Done! Check your folders.");
         }
     }
 
@@ -187,21 +185,12 @@ public class UIController {
         }
     }
 
-    @FXML
-    private void handleReset() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Reset to default rules");
-        alert.setHeaderText("Are you sure?");
-        alert.setContentText("This will permanently reset the rules to default.");
+    private void setStatusDashboard(String msg) {
+        statusLabelDashboard.setText("Status: " + msg);
+    }
 
-        if (alert.showAndWait().get() == ButtonType.OK) {
-            organiser.resetToDefaults();
-            rulesData.clear();
-            for (String ext : organiser.extensionMap.keySet()) {
-                rulesData.add(new Rule(ext, organiser.extensionMap.get(ext)));
-            }
-        }
-
+    private void setStatusRules(String msg) {
+        statusLabelRules.setText("Status: " + msg);
     }
 
 }
