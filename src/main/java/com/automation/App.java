@@ -10,12 +10,21 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/MainView.fxml"));
-        stage.setTitle("Personal Automation Tool");
+        var url = getClass().getResource("/MainView.fxml");
+        if (url == null) {
+            throw new RuntimeException("Cannot find MainView.fxml");
+        }
+        FXMLLoader loader = new FXMLLoader(url);
+        Parent root = loader.load();
+
+        stage.setTitle("FileOrganiser");
         stage.setScene(new Scene(root, 600, 500));
+        stage.centerOnScreen();
+        stage.setResizable(false);
         stage.show();
     }
+
     public static void main(String[] args) {
-       launch(args);
+        launch(args);
     }
 }
