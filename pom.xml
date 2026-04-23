@@ -5,12 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.automation</groupId>
-  <artifactId>personal-automation</artifactId>
+  <artifactId>FileOrgasniser</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>personal-automation</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <name>FileOrganiser</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
