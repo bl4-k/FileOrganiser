@@ -11,12 +11,20 @@ import java.util.Map;
 
 public class FileOrganiser {
 
-    Map<String, String> extensionMap = new HashMap<>();
-    ArrayList<String> logs = new ArrayList<>();
+    private final Map<String, String> extensionMap = new HashMap<>();
+    private final List<String> logs = new ArrayList<>();
 
     public FileOrganiser() {
         loadRules();
         readLogFromFile();
+    }
+
+    public Map<String, String> getExtensionMap() {
+        return extensionMap;
+    }
+
+    public List<String> getLogs() {
+        return logs;
     }
 
     public void initialiseDefaultRules() {
@@ -38,10 +46,9 @@ public class FileOrganiser {
         extensionMap.put(".mkv", "Organised/Video");
     }
 
-    public void organiseDownloads(Path directory, boolean moveOthers) {
+    public void organiseFile(Path directory, boolean moveOthers) {
         String cleanDir = directory.toFile().getAbsolutePath().replace("\\", "/");
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
-        String logEntry = "[" + timestamp + "] Moving files in " + cleanDir + ".";
+        String logEntry = "[" + timestamp() + "] Moving files in " + cleanDir + ".";
         logs.add(logEntry);
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
@@ -56,8 +63,7 @@ public class FileOrganiser {
             System.err.println("Error reading Downloads folder: " + e.getMessage());
         }
 
-        timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
-        logEntry = "[" + timestamp + "] Finished moving files in " + cleanDir + ".";
+        logEntry = "[" + timestamp() + "] Finished moving files in " + cleanDir + ".";
         logs.add(logEntry);
     }
 
@@ -83,8 +89,7 @@ public class FileOrganiser {
             logMessage = "Unable to move " + fileName + ".";
         }
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
-        String logEntry = "[" + timestamp + "] " + logMessage;
+        String logEntry = "[" + timestamp() + "] " + logMessage;
 
         return logEntry;
     }
@@ -92,9 +97,7 @@ public class FileOrganiser {
     private String moveFile(Path source, String folderName) throws IOException {
         Path targetDir = source.getParent().resolve(folderName);
 
-        if (Files.notExists(targetDir)) {
-            Files.createDirectories(targetDir);
-        }
+        Files.createDirectories(targetDir);
 
         Path targetPath = targetDir.resolve(source.getFileName());
         Files.move(source, targetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -108,11 +111,9 @@ public class FileOrganiser {
         try {
             Path folderPath = getAppDataPath();
 
-            if (Files.notExists(folderPath)) {
-                Files.createDirectories(folderPath);
-            }
+            Files.createDirectories(folderPath);
 
-            Path logFile = folderPath.resolve("logs.txt");
+            Path logFile = logFilePath();
             String logEntry = message + System.lineSeparator();
 
             Files.write(
@@ -128,11 +129,83 @@ public class FileOrganiser {
 
     public void readLogFromFile() {
         try {
-            logs = (ArrayList<String>) Files.readAllLines(getAppDataPath().resolve("logs.txt"));
-        } catch (Exception e) {
-            System.err.println("Couldn't read logs.");
-        }
+            Path logFile = logFilePath();
 
+            if (Files.exists(logFile)) {
+                logs.clear();
+                logs.addAll(Files.readAllLines(logFile));
+            }
+        } catch (IOException e) {
+            System.err.println("Couldn't read logs: " + e.getMessage());
+        }
+    }
+
+    public void addRules(String ext, String directory) {
+        extensionMap.put(ext, directory);
+        saveRules();
+    }
+
+    public void removeRules(Rule rule) {
+        extensionMap.remove(rule.getExtension());
+        saveRules();
+    }
+
+    public void saveRules() {
+        try {
+            Path path = getAppDataPath().resolve("rules.csv");
+            if (Files.notExists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
+
+            List<String> lines = new ArrayList<>();
+            extensionMap.forEach((ext, folder) -> lines.add(ext + "," + folder));
+
+            Files.write(
+                    path,
+                    lines,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            System.err.println("Failed to save rules: " + e.getMessage());
+        }
+    }
+
+    public void loadRules() {
+        Path path = getAppDataPath().resolve("rules.csv");
+        if (Files.exists(path)) {
+            try {
+                List<String> lines = Files.readAllLines(path);
+                extensionMap.clear();
+                for (String line : lines) {
+                    String[] parts = line.split(",", 2);
+                    if (parts.length == 2) {
+                        addRules(parts[0], parts[1]);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Failed to load rules: " + e.getMessage());
+            }
+        } else {
+            initialiseDefaultRules();
+        }
+    }
+
+    public void resetToDefaults() {
+        extensionMap.clear();
+        initialiseDefaultRules();
+        saveRules();
+    }
+
+    public void clearLogFile() {
+        try {
+            Path logFile = logFilePath();
+
+            if (Files.exists(logFile)) {
+                Files.write(logFile, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        } catch (IOException e) {
+            System.err.println("Could not clear log file: " + e.getMessage());
+        }
     }
 
     private Path getAppDataPath() {
@@ -151,72 +224,12 @@ public class FileOrganiser {
         return path;
     }
 
-    public void saveRules() {
-        try {
-            Path path = getAppDataPath().resolve("rules.csv");
-            if (Files.notExists(path.getParent())) {
-                Files.createDirectories(path.getParent());
-            }
-
-            List<String> lines = new ArrayList<>();
-            extensionMap.forEach((ext, folder) -> lines.add(ext + "," + folder));
-
-            Files.write(
-                    path,
-                    lines,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (Exception e) {
-            System.err.println("Failed to save rules: " + e.getMessage());
-        }
+    private Path logFilePath() {
+        return getAppDataPath().resolve("logs.txt");
     }
 
-    public void loadRules() {
-        Path path = getAppDataPath().resolve("rules.csv");
-        if (Files.exists(path)) {
-            try {
-                List<String> lines = Files.readAllLines(path);
-                extensionMap.clear();
-                for (String line : lines) {
-                    String[] parts = line.split(",", 2);
-                    if (parts.length == 2) {
-                        extensionMap.put(parts[0], parts[1]);
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Failed to load rules: " + e.getMessage());
-            }
-        } else {
-            initialiseDefaultRules();
-        }
+    private String timestamp() {
+        return LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
     }
-
-    public void addRules(String ext, String directory) {
-        extensionMap.put(ext, directory);
-        saveRules();
-    }
-
-    public void removeRules(Rule rule) {
-        extensionMap.remove(rule.getExtension());
-        saveRules();
-    }
-
-    public void resetToDefaults() {
-        extensionMap.clear();
-        initialiseDefaultRules();
-        saveRules();
-    }
-
-    public void clearLogFile() {
-        try {
-        Path logFile = getAppDataPath().resolve("logs.txt");
-        
-        if (Files.exists(logFile)) {
-            Files.write(logFile, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
-        }
-    } catch (IOException e) {
-        System.err.println("Could not clear log file: " + e.getMessage());
-    }
-    }
-
 }
