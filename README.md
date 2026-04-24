@@ -59,3 +59,15 @@ git clone https://github.com/bl4-k/FileOrganiser.git
 cd FileOrganiser
 mvn clean install
 mvn javafx:run
+```
+
+---
+
+## Production Release Checklist
+
+- Run `mvn clean test` and confirm all tests pass.
+- Launch app with `mvn javafx:run` and verify folder selection, run summary, rule add/remove, and log actions.
+- Validate safe move behavior by placing duplicate filenames in destination and confirming automatic rename (no overwrite).
+- Confirm failure states show clear status messages (invalid folder input, missing selection, file move errors).
+- Inspect saved logs in the app data location and verify both clear actions work as intended.
+- Review `pom.xml` dependencies before release and keep only required libraries.
