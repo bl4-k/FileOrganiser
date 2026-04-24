@@ -14,27 +14,34 @@
         <!-- ================= DASHBOARD ================= -->
         <Tab text="Dashboard">
             <content>
-                <VBox alignment="CENTER" spacing="20.0">
+                <VBox alignment="CENTER" spacing="20.0" styleClass="screen-container">
                     <padding>
                         <Insets top="20" right="20" bottom="20" left="20"/>
                     </padding>
 
                     <children>
-                        <Label text="File Organiser"
-                               style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <Label text="File Organiser" styleClass="screen-title"/>
 
                         <HBox alignment="CENTER" spacing="10" >
-                            <Button text="Select Folder" onAction="#handleSelectFolder"/>
+                            <Button text="_Select Folder" mnemonicParsing="true" onAction="#handleSelectFolder" styleClass="secondary-button"/>
                             <Label fx:id="pathLabel" text="No folder selected"/>
                         </HBox>
 
                         <Button fx:id="startBtn"
-                                text="Run"
+                                text="_Run"
+                                mnemonicParsing="true"
                                 onAction="#handleRun"
                                 prefWidth="150"
-                                prefHeight="40"/>
+                                prefHeight="40"
+                                styleClass="primary-button"/>
 
-                        <Label fx:id="statusLabelDashboard" text="Status: Ready"/>
+                        <ProgressIndicator fx:id="runProgressIndicator"
+                                           prefHeight="28"
+                                           prefWidth="28"
+                                           visible="false"
+                                           managed="false"/>
+
+                        <Label fx:id="statusLabelDashboard" text="Status: Ready" styleClass="status-ready"/>
                     </children>
                 </VBox>
             </content>
@@ -43,14 +50,13 @@
         <!-- ================= RULES ================= -->
         <Tab text="Rules">
             <content>
-                <VBox alignment="CENTER" spacing="20.0">
+                <VBox alignment="CENTER" spacing="20.0" styleClass="screen-container">
                     <padding>
                         <Insets top="20" right="20" bottom="20" left="20"/>
                     </padding>
 
                     <children>
-                        <Label text="Configure Extension Rules"
-                               style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <Label text="Configure Extension Rules" styleClass="screen-title"/>
 
                         <TableView fx:id="rulesTable" prefHeight="200" editable="true">
                             <columnResizePolicy>
@@ -65,21 +71,27 @@
 
                         <VBox spacing="10">
 
-                            <Label text="Modify Rules" style="-fx-font-weight: bold;"/>
+                            <Label text="Modify Rules" styleClass="section-title"/>
 
                             <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Extension"/>
                                 <ComboBox fx:id="extComboBox"
                                           promptText="Select or type Ext..."
                                           editable="true"
                                           prefWidth="135"/>
 
+                                <Label text="Target Folder"/>
                                 <TextField fx:id="newFolderField"
                                            promptText="Select or type folder..."
                                            HBox.hgrow="ALWAYS"/>
 
-                                <Button text="📁" onAction="#handleBrowseNewRuleFolder"/>
-                                <Button text="Add Rule" onAction="#handleAddRule"/>
-                                <Button text="Remove Selected" onAction="#handleRemoveRule"/>
+                                <Button fx:id="browseRuleFolderBtn" text="Browse..." onAction="#handleBrowseNewRuleFolder" styleClass="secondary-button">
+                                    <tooltip>
+                                        <Tooltip text="Choose folder for the selected extension rule"/>
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="addRuleBtn" text="_Add Rule" mnemonicParsing="true" onAction="#handleAddRule" styleClass="primary-button"/>
+                                <Button fx:id="removeRuleBtn" text="Remove Selected" onAction="#handleRemoveRule" styleClass="danger-button"/>
                             </HBox>
 
                             <HBox alignment="CENTER_LEFT">
@@ -89,10 +101,10 @@
 
                                 <Region HBox.hgrow="ALWAYS"/>
 
-                                <Button text="Reset to Defaults" onAction="#handleReset"/>
+                                <Button fx:id="resetRulesBtn" text="Reset to Defaults" onAction="#handleReset" styleClass="secondary-button"/>
                             </HBox>
 
-                            <Label fx:id="statusLabelRules" text=""/>
+                            <Label fx:id="statusLabelRules" text="Status: Ready" styleClass="status-ready"/>
                         </VBox>
 
                     </children>
@@ -103,20 +115,19 @@
         <!-- ================= LOGS ================= -->
         <Tab text="Logs">
             <content>
-                <VBox alignment="CENTER" spacing="20.0">
+                <VBox alignment="CENTER" spacing="20.0" styleClass="screen-container">
                     <padding>
                         <Insets top="20" right="20" bottom="20" left="20"/>
                     </padding>
 
                     <children>
-                        <Label text="Activity Log"
-                               style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+                        <Label text="Activity Log" styleClass="screen-title"/>
 
                         <ListView fx:id="logListView" VBox.vgrow="ALWAYS"/>
 
                         <HBox spacing="10" alignment="CENTER">
-                            <Button text="Clear Logs" onAction="#handleClearLogs"/>
-                            <Button text="Clear Logs on Disk" onAction="#handleClearStoredLogs"/>
+                            <Button text="Clear Visible Logs" onAction="#handleClearLogs" styleClass="secondary-button"/>
+                            <Button text="Delete Saved Logs" onAction="#handleClearStoredLogs" styleClass="danger-button"/>
                         </HBox>
                     </children>
                 </VBox>
