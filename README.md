@@ -55,7 +55,7 @@ Built using JavaFX as a learning project for file automation and UI development.
 ### Steps
 
 ```bash
-git clone https://github.com/bl4-k/FileOrganiser.git
+git clone https://github.com/maxim-oa/FileOrganiser.git
 cd FileOrganiser
 mvn clean install
 mvn javafx:run
