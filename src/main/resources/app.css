@@ -1,0 +1,50 @@
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.screen-container {
+    -fx-padding: 20;
+}
+
+.screen-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.section-title {
+    -fx-font-weight: bold;
+}
+
+.button {
+    -fx-cursor: hand;
+}
+
+.primary-button {
+    -fx-background-color: #2b67f6;
+    -fx-text-fill: white;
+}
+
+.secondary-button {
+    -fx-background-color: #f2f3f5;
+}
+
+.danger-button {
+    -fx-background-color: #bf2f2f;
+    -fx-text-fill: white;
+}
+
+.status-ready {
+    -fx-text-fill: #3b3b3b;
+}
+
+.status-success {
+    -fx-text-fill: #1b7f3a;
+}
+
+.status-warning {
+    -fx-text-fill: #a55b00;
+}
+
+.status-error {
+    -fx-text-fill: #b00020;
+}

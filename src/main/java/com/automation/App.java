@@ -17,10 +17,17 @@ public class App extends Application {
         FXMLLoader loader = new FXMLLoader(url);
         Parent root = loader.load();
 
+        Scene scene = new Scene(root, 760, 560);
+        var stylesheet = getClass().getResource("/app.css");
+        if (stylesheet != null) {
+            scene.getStylesheets().add(stylesheet.toExternalForm());
+        }
+
         stage.setTitle("FileOrganiser");
-        stage.setScene(new Scene(root, 600, 500));
+        stage.setScene(scene);
         stage.centerOnScreen();
-        stage.setResizable(false);
+        stage.setMinWidth(700);
+        stage.setMinHeight(520);
         stage.show();
     }
 

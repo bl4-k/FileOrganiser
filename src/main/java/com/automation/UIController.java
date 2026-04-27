@@ -2,11 +2,14 @@ package com.automation;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.concurrent.Task;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
@@ -34,6 +37,18 @@ public class UIController {
     private CheckBox othersCheckBox;
     @FXML
     private ListView<String> logListView;
+    @FXML
+    private ProgressIndicator runProgressIndicator;
+    @FXML
+    private Button startBtn;
+    @FXML
+    private Button addRuleBtn;
+    @FXML
+    private Button removeRuleBtn;
+    @FXML
+    private Button resetRulesBtn;
+    @FXML
+    private Button browseRuleFolderBtn;
     private ObservableList<String> logData = FXCollections.observableArrayList();
 
     @FXML
@@ -53,20 +68,33 @@ public class UIController {
 
         rulesTable.setItems(rulesData);
         logListView.setItems(logData);
+        rulesTable.setPlaceholder(new Label("No custom rules configured."));
+        logListView.setPlaceholder(new Label("No logs yet. Run the organiser to generate activity."));
+        runProgressIndicator.setVisible(false);
 
         rulesTable.getSortOrder().add(folderColumn);
         rulesTable.sort();
 
-        logListView.scrollTo(logData.size() - 1);
+        if (!logData.isEmpty()) {
+            logListView.scrollTo(logData.size() - 1);
+        }
+
+        startBtn.setDisable(true);
     }
 
     @FXML
     private void handleAddRule() {
         String rawExt = extComboBox.getEditor().getText().trim().toLowerCase();
-        String folder = newFolderField.getText();
+        String folder = newFolderField.getText().trim();
 
         if (rawExt.isEmpty() || folder.isEmpty()) {
-            setStatusRules("Select both an extension and a folder!");
+            setStatusRules("Select both an extension and a folder.", StatusType.ERROR);
+            return;
+        }
+
+        Path folderPath = Paths.get(folder);
+        if (!folderPath.toFile().exists() || !folderPath.toFile().isDirectory()) {
+            setStatusRules("Select an existing folder path.", StatusType.ERROR);
             return;
         }
 
@@ -76,7 +104,7 @@ public class UIController {
         boolean exists = rulesData.stream().anyMatch(r -> r.getExtension().equalsIgnoreCase(processedExt));
 
         if (exists) {
-            setStatusRules("Rule for " + processedExt + " already exists!");
+            setStatusRules("Rule for " + processedExt + " already exists.", StatusType.WARNING);
             return;
         }
 
@@ -86,16 +114,28 @@ public class UIController {
 
         extComboBox.getEditor().clear();
         newFolderField.clear();
-        setStatusRules("Rule has been set!");
+        newFolderField.requestFocus();
+        setStatusRules("Rule saved successfully.", StatusType.SUCCESS);
 
     }
 
     @FXML
     private void handleRemoveRule() {
         Rule selected = rulesTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
+        if (selected == null) {
+            setStatusRules("Select a rule to remove.", StatusType.WARNING);
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Remove Rule");
+        alert.setHeaderText("Remove selected rule?");
+        alert.setContentText("This action updates your saved rule settings.");
+
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             rulesData.remove(selected);
             organiser.removeRules(selected);
+            setStatusRules("Rule removed.", StatusType.SUCCESS);
         }
     }
 
@@ -106,6 +146,7 @@ public class UIController {
         if (selected != null) {
             String universalPath = selected.getAbsolutePath().replace("\\", "/");
             newFolderField.setText(universalPath);
+            setStatusRules("Folder selected.", StatusType.READY);
         }
     }
 
@@ -116,9 +157,10 @@ public class UIController {
         alert.setHeaderText("Are you sure?");
         alert.setContentText("This will permanently reset the rules to default.");
 
-        if (alert.showAndWait().get() == ButtonType.OK) {
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             organiser.resetToDefaults();
             loadRules();
+            setStatusRules("Default rules restored.", StatusType.SUCCESS);
         }
 
     }
@@ -134,6 +176,7 @@ public class UIController {
     @FXML
     private void handleClearLogs() {
         logData.clear();
+        setStatusDashboard("Visible log list cleared.", StatusType.READY);
     }
 
     @FXML
@@ -143,33 +186,68 @@ public class UIController {
         alert.setHeaderText("Are you sure?");
         alert.setContentText("This will permanently delete the log history.");
 
-        if (alert.showAndWait().get() == ButtonType.OK) {
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             logData.clear();
             organiser.clearLogFile();
+            setStatusDashboard("Saved logs deleted.", StatusType.SUCCESS);
         }
     }
 
     // Loads logs into UI state
     private void loadLogs() {
+        logData.clear();
         logData.addAll(organiser.getLogs());
         organiser.getLogs().clear();
     }
 
     @FXML
     private void handleRun() {
-        if (selectedDir != null) {
-            setStatusDashboard("Organising...");
+        if (selectedDir == null) {
+            setStatusDashboard("Select a folder before running.", StatusType.ERROR);
+            return;
+        }
 
-            boolean moveOthers = othersCheckBox.isSelected();
-            organiser.organiseFile(selectedDir, moveOthers);
+        setRunningState(true);
+        setStatusDashboard("Organising files...", StatusType.READY);
+
+        boolean moveOthers = othersCheckBox.isSelected();
+        Task<FileOrganiser.OperationSummary> organiseTask = new Task<>() {
+            @Override
+            protected FileOrganiser.OperationSummary call() {
+                return organiser.organiseFile(selectedDir, moveOthers);
+            }
+        };
+
+        organiseTask.setOnSucceeded(event -> {
+            FileOrganiser.OperationSummary summary = organiseTask.getValue();
 
             for (String log : organiser.getLogs()) {
                 logData.add(log);
                 organiser.writeLogToFile(log);
             }
+            organiser.getLogs().clear();
+            if (!logData.isEmpty()) {
+                logListView.scrollTo(logData.size() - 1);
+            }
 
-            setStatusDashboard("Done! Check your folders.");
-        }
+            String result = "Moved: " + summary.getMovedCount()
+                    + " | Skipped: " + summary.getSkippedCount()
+                    + " | Failed: " + summary.getFailedCount();
+            StatusType statusType = summary.getFailedCount() > 0 ? StatusType.WARNING : StatusType.SUCCESS;
+            setStatusDashboard(result, statusType);
+            setRunningState(false);
+        });
+
+        organiseTask.setOnFailed(event -> {
+            Throwable error = organiseTask.getException();
+            String message = (error == null) ? "Unknown error during organise run." : error.getMessage();
+            setStatusDashboard("Run failed: " + message, StatusType.ERROR);
+            setRunningState(false);
+        });
+
+        Thread worker = new Thread(organiseTask, "file-organiser-runner");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     @FXML
@@ -182,15 +260,50 @@ public class UIController {
         if (selectedFile != null) {
             selectedDir = selectedFile.toPath();
             pathLabel.setText(selectedDir.toString());
+            startBtn.setDisable(false);
+            setStatusDashboard("Folder selected. Ready to run.", StatusType.READY);
         }
     }
 
-    private void setStatusDashboard(String msg) {
+    private void setStatusDashboard(String msg, StatusType type) {
         statusLabelDashboard.setText("Status: " + msg);
+        applyStatusStyle(statusLabelDashboard, type);
     }
 
-    private void setStatusRules(String msg) {
+    private void setStatusRules(String msg, StatusType type) {
         statusLabelRules.setText("Status: " + msg);
+        applyStatusStyle(statusLabelRules, type);
+    }
+
+    private void applyStatusStyle(Label label, StatusType type) {
+        label.getStyleClass().removeAll("status-ready", "status-success", "status-warning", "status-error");
+        label.getStyleClass().add(type.styleClass);
+    }
+
+    private void setRunningState(boolean running) {
+        runProgressIndicator.setVisible(running);
+        runProgressIndicator.setManaged(running);
+        startBtn.setDisable(running || selectedDir == null);
+        setDisableControls(running, addRuleBtn, removeRuleBtn, resetRulesBtn, browseRuleFolderBtn, extComboBox, newFolderField, othersCheckBox);
+    }
+
+    private void setDisableControls(boolean disable, Node... nodes) {
+        for (Node node : nodes) {
+            node.setDisable(disable);
+        }
+    }
+
+    private enum StatusType {
+        READY("status-ready"),
+        SUCCESS("status-success"),
+        WARNING("status-warning"),
+        ERROR("status-error");
+
+        private final String styleClass;
+
+        StatusType(String styleClass) {
+            this.styleClass = styleClass;
+        }
     }
 
 }

@@ -5,16 +5,24 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class FileOrganiser {
+    private static final int MAX_LOG_LINES = 1000;
 
     private final Map<String, String> extensionMap = new HashMap<>();
     private final List<String> logs = new ArrayList<>();
+    private final Path appDataPathOverride;
 
     public FileOrganiser() {
+        this(null);
+    }
+
+    public FileOrganiser(Path appDataPathOverride) {
+        this.appDataPathOverride = appDataPathOverride;
         loadRules();
         readLogFromFile();
     }
@@ -46,7 +54,16 @@ public class FileOrganiser {
         extensionMap.put(".mkv", "Organised/Video");
     }
 
-    public void organiseFile(Path directory, boolean moveOthers) {
+    public OperationSummary organiseFile(Path directory, boolean moveOthers) {
+        if (directory == null || !Files.isDirectory(directory)) {
+            OperationSummary invalidSummary = new OperationSummary();
+            invalidSummary.addFailure("Selected path is not a valid folder.");
+            String invalidEntry = "[" + timestamp() + "] Selected path is not a valid folder.";
+            logs.add(invalidEntry);
+            return invalidSummary;
+        }
+
+        OperationSummary summary = new OperationSummary();
         String cleanDir = directory.toFile().getAbsolutePath().replace("\\", "/");
         String logEntry = "[" + timestamp() + "] Moving files in " + cleanDir + ".";
         logs.add(logEntry);
@@ -55,19 +72,22 @@ public class FileOrganiser {
             for (Path file : stream) {
                 // Skip directories and only process files
                 if (Files.isRegularFile(file)) {
-                    String logMessage = sortFile(file, moveOthers);
+                    String logMessage = sortFile(file, moveOthers, summary);
                     logs.add(logMessage);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading Downloads folder: " + e.getMessage());
+            String errorMessage = "Could not read folder: " + e.getMessage();
+            summary.addFailure(errorMessage);
+            logs.add("[" + timestamp() + "] " + errorMessage);
         }
 
         logEntry = "[" + timestamp() + "] Finished moving files in " + cleanDir + ".";
         logs.add(logEntry);
+        return summary;
     }
 
-    private String sortFile(Path source, boolean moveOthers) throws IOException {
+    private String sortFile(Path source, boolean moveOthers, OperationSummary summary) {
         String fileName = source.getFileName().toString().toLowerCase();
         int lastDotIndex = fileName.lastIndexOf('.');
 
@@ -84,9 +104,16 @@ public class FileOrganiser {
         }
 
         if (targetFolder != null) {
-            logMessage = moveFile(source, targetFolder);
+            try {
+                logMessage = moveFile(source, targetFolder);
+                summary.incrementMoved();
+            } catch (IOException e) {
+                logMessage = "Failed to move " + source.getFileName() + ": " + e.getMessage();
+                summary.addFailure(logMessage);
+            }
         } else {
-            logMessage = "Unable to move " + fileName + ".";
+            logMessage = "Skipped " + fileName + " (no matching rule).";
+            summary.incrementSkipped();
         }
 
         String logEntry = "[" + timestamp() + "] " + logMessage;
@@ -99,12 +126,35 @@ public class FileOrganiser {
 
         Files.createDirectories(targetDir);
 
-        Path targetPath = targetDir.resolve(source.getFileName());
-        Files.move(source, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        Path targetPath = resolveConflictSafePath(targetDir, source.getFileName().toString());
+        Files.move(source, targetPath);
 
         String logMessage = source.getFileName() + " -> " + folderName;
+        if (!targetPath.getFileName().equals(source.getFileName())) {
+            logMessage += " (renamed to " + targetPath.getFileName() + ")";
+        }
 
         return logMessage;
+    }
+
+    private Path resolveConflictSafePath(Path targetDir, String originalName) throws IOException {
+        Path targetPath = targetDir.resolve(originalName);
+        if (!Files.exists(targetPath)) {
+            return targetPath;
+        }
+
+        int dotIndex = originalName.lastIndexOf('.');
+        String namePart = dotIndex > 0 ? originalName.substring(0, dotIndex) : originalName;
+        String extension = dotIndex > 0 ? originalName.substring(dotIndex) : "";
+
+        int attempt = 1;
+        while (Files.exists(targetPath)) {
+            String candidateName = namePart + " (" + attempt + ")" + extension;
+            targetPath = targetDir.resolve(candidateName);
+            attempt++;
+        }
+
+        return targetPath;
     }
 
     public void writeLogToFile(String message) {
@@ -133,7 +183,9 @@ public class FileOrganiser {
 
             if (Files.exists(logFile)) {
                 logs.clear();
-                logs.addAll(Files.readAllLines(logFile));
+                List<String> fileLogs = Files.readAllLines(logFile);
+                int from = Math.max(0, fileLogs.size() - MAX_LOG_LINES);
+                logs.addAll(fileLogs.subList(from, fileLogs.size()));
             }
         } catch (IOException e) {
             System.err.println("Couldn't read logs: " + e.getMessage());
@@ -158,7 +210,7 @@ public class FileOrganiser {
             }
 
             List<String> lines = new ArrayList<>();
-            extensionMap.forEach((ext, folder) -> lines.add(ext + "," + folder));
+            extensionMap.forEach((ext, folder) -> lines.add(escapeRuleValue(ext) + "," + escapeRuleValue(folder)));
 
             Files.write(
                     path,
@@ -177,9 +229,9 @@ public class FileOrganiser {
                 List<String> lines = Files.readAllLines(path);
                 extensionMap.clear();
                 for (String line : lines) {
-                    String[] parts = line.split(",", 2);
+                    String[] parts = splitEscapedCsvLine(line);
                     if (parts.length == 2) {
-                        addRules(parts[0], parts[1]);
+                        extensionMap.put(unescapeRuleValue(parts[0]), unescapeRuleValue(parts[1]));
                     }
                 }
             } catch (IOException e) {
@@ -209,12 +261,21 @@ public class FileOrganiser {
     }
 
     private Path getAppDataPath() {
+        if (appDataPathOverride != null) {
+            return appDataPathOverride;
+        }
+
         String os = System.getProperty("os.name").toLowerCase();
         String userHome = System.getProperty("user.home");
         Path path;
 
         if (os.contains("win")) {
-            path = Paths.get(System.getenv("APPDATA"), "FileOrganiser");
+            String appData = System.getenv("APPDATA");
+            if (appData == null || appData.isBlank()) {
+                path = Paths.get(userHome, "AppData", "Roaming", "FileOrganiser");
+            } else {
+                path = Paths.get(appData, "FileOrganiser");
+            }
         } else if (os.contains("mac")) {
             path = Paths.get(userHome, "Library", "Application Support", "FileOrganiser");
         } else {
@@ -231,5 +292,105 @@ public class FileOrganiser {
     private String timestamp() {
         return LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd | HH:mm:ss"));
+    }
+
+    private String escapeRuleValue(String value) {
+        return value.replace("\\", "\\\\").replace(",", "\\,");
+    }
+
+    private String unescapeRuleValue(String value) {
+        StringBuilder output = new StringBuilder();
+        boolean escaping = false;
+        for (char current : value.toCharArray()) {
+            if (escaping) {
+                output.append(current);
+                escaping = false;
+            } else if (current == '\\') {
+                escaping = true;
+            } else {
+                output.append(current);
+            }
+        }
+        if (escaping) {
+            output.append('\\');
+        }
+        return output.toString();
+    }
+
+    private String[] splitEscapedCsvLine(String line) {
+        StringBuilder first = new StringBuilder();
+        StringBuilder second = new StringBuilder();
+        boolean escaping = false;
+        boolean secondField = false;
+
+        for (char current : line.toCharArray()) {
+            if (escaping) {
+                if (secondField) {
+                    second.append(current);
+                } else {
+                    first.append(current);
+                }
+                escaping = false;
+                continue;
+            }
+
+            if (current == '\\') {
+                escaping = true;
+                continue;
+            }
+
+            if (current == ',' && !secondField) {
+                secondField = true;
+                continue;
+            }
+
+            if (secondField) {
+                second.append(current);
+            } else {
+                first.append(current);
+            }
+        }
+
+        if (!secondField) {
+            return new String[0];
+        }
+
+        return new String[] {first.toString(), second.toString()};
+    }
+
+    public static class OperationSummary {
+        private int movedCount;
+        private int skippedCount;
+        private int failedCount;
+        private final List<String> failures = new ArrayList<>();
+
+        public int getMovedCount() {
+            return movedCount;
+        }
+
+        public int getSkippedCount() {
+            return skippedCount;
+        }
+
+        public int getFailedCount() {
+            return failedCount;
+        }
+
+        public List<String> getFailures() {
+            return Collections.unmodifiableList(failures);
+        }
+
+        private void incrementMoved() {
+            movedCount++;
+        }
+
+        private void incrementSkipped() {
+            skippedCount++;
+        }
+
+        private void addFailure(String message) {
+            failedCount++;
+            failures.add(message);
+        }
     }
 }
